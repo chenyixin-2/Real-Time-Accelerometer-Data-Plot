@@ -24,33 +24,20 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
-class ClearDataTask extends TimerTask {
-    private LineChart chart = null;
-    public ClearDataTask(LineChart chart) {
-        this.chart = chart;
-    }
-    public void run() {
-        //calculate the new position of myBall
-        if(chart!= null && chart.getLineData() != null) {
-            chart.getLineData().clearValues();
-        }
-    }
-}
-
 public class MainActivity extends AppCompatActivity implements SensorEventListener {
-    private Timer timer = new Timer();
+    private final Timer mTimer = new Timer();
     private static final String TAG = "MainActivity";
     private SensorManager mSensorManager;
     private Sensor mAccelerometer;
-    private  Sensor sensors;
 
     private LineChart mChart;
     private Thread thread;
     private boolean plotData = true;
 
-    private int samplePeriodUs = 50;
+    private final int samplePeriodUs = 50;
     private long sampleCount = 0;
     private long sampleTimeSec = 0;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -61,8 +48,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         List<Sensor> sensors = mSensorManager.getSensorList(Sensor.TYPE_ALL);
 
-        for(int i=0; i<sensors.size(); i++){
-            Log.d(TAG, "onCreate: Sensor "+ i + ": " + sensors.get(i).toString());
+        for (int i = 0; i < sensors.size(); i++) {
+            Log.d(TAG, "onCreate: Sensor " + i + ": " + sensors.get(i).toString());
         }
 
         if (mAccelerometer != null) {
@@ -122,26 +109,36 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         mChart.getXAxis().setDrawGridLines(false);
         mChart.setDrawBorders(false);
 
-        //TimerTask cleartask = new ClearDataTask(mChart);
-        //timer.scheduleAtFixedRate(cleartask, 0, 1000);
+//        TimerTask cleartask = new TimerTask() {
+//            @Override
+//            public void run() {
+//                synchronized (mChart) {
+//
+//                }
+//            }
+//        };
+//        timer.scheduleAtFixedRate(cleartask, 0, 1000);
 
         TimerTask sampletask = new TimerTask() {
             @Override
             public void run() {
                 sampleTimeSec++;
-                Log.d("SampleRateTask", "every minutes smaples : " + (float)sampleCount/(float)sampleTimeSec);
+                Log.d("SampleRateTask", "every minutes smaples : " + (float) sampleCount / (float) sampleTimeSec);
             }
         };
-        timer.scheduleAtFixedRate(sampletask, 0, 1000);
+        mTimer.scheduleAtFixedRate(sampletask, 0, 1000);
+
         feedMultiple();
     }
 
     private void addEntry(SensorEvent event) {
-
         LineData data = mChart.getData();
         int timeCount = 10;
-        sampleCount+=timeCount;
+        sampleCount += timeCount;
         if (data != null) {
+
+            ILineDataSet s = mChart.getLineData().getDataSetByIndex(0);
+            if (s != null && s.getEntryCount() > 1000) mChart.getLineData().clearValues();
 
             {
                 int idx = 0;
@@ -264,20 +261,19 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     data.addEntry(new Entry(set.getEntryCount(), event.values[0] + -5 + idx), idx);
                 }
             }
-
             data.notifyDataChanged();
             data.calcMinMaxY(data.getXMin(), data.getXMax());
-            // let the chart know it's data has changed
-            mChart.notifyDataSetChanged();
-
-            // limit the number of visible entries
-            mChart.setVisibleXRangeMaximum(150);
-            // mChart.setVisibleYRange(30, AxisDependency.LEFT);
-
-            // move to the latest entry
             mChart.moveViewToX(data.getEntryCount());
-            mChart.setVisibleYRange(-100, 50, YAxis.AxisDependency.LEFT);
         }
+        // let the chart know it's data has changed
+        mChart.notifyDataSetChanged();
+
+        // limit the number of visible entries
+        mChart.setVisibleXRangeMaximum(150);
+        // mChart.setVisibleYRange(30, AxisDependency.LEFT);
+
+        // move to the latest entry
+        mChart.setVisibleYRange(-100, 50, YAxis.AxisDependency.LEFT);
     }
 
     private LineDataSet createSet(int color) {
@@ -296,22 +292,18 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     private void feedMultiple() {
 
-        if (thread != null){
+        if (thread != null) {
             thread.interrupt();
         }
 
-        thread = new Thread(new Runnable() {
-
-            @Override
-            public void run() {
-                while (true){
-                    plotData = true;
-                    try {
-                        Thread.sleep(1);
-                    } catch (InterruptedException e) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
-                    }
+        thread = new Thread(() -> {
+            while (!Thread.currentThread().isInterrupted()) {
+                plotData = true;
+                try {
+                    Thread.sleep(1);
+                } catch (InterruptedException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
                 }
             }
         });
@@ -337,7 +329,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     @Override
     public final void onSensorChanged(SensorEvent event) {
-        if(plotData){
+        if (plotData) {
             addEntry(event);
             plotData = false;
         }
