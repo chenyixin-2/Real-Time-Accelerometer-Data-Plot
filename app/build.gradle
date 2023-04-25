@@ -10,6 +10,7 @@ android {
         versionName "2.0"
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
     }
+    namespace 'com.example.mbreath.realtimeaccelerometer'
     buildTypes {
         release {
             minifyEnabled false

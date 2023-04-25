@@ -19,11 +19,26 @@ import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
-import com.github.mikephil.charting.utils.ColorTemplate;
 
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
+
+class ClearDataTask extends TimerTask {
+    private LineChart chart = null;
+    public ClearDataTask(LineChart chart) {
+        this.chart = chart;
+    }
+    public void run() {
+        //calculate the new position of myBall
+        if(chart!= null && chart.getLineData() != null) {
+            chart.getLineData().clearValues();
+        }
+    }
+}
 
 public class MainActivity extends AppCompatActivity implements SensorEventListener {
+    private Timer timer = new Timer();
     private static final String TAG = "MainActivity";
     private SensorManager mSensorManager;
     private Sensor mAccelerometer;
@@ -33,6 +48,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private Thread thread;
     private boolean plotData = true;
 
+    private int samplePeriodUs = 50;
+    private long sampleCount = 0;
+    private long sampleTimeSec = 0;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -48,7 +66,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         }
 
         if (mAccelerometer != null) {
-            mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_GAME);
+            boolean breg = mSensorManager.registerListener(this, mAccelerometer, samplePeriodUs);
+            Log.d(TAG, "onCreate: Sensor registered: " + breg);
         }
 
         mChart = (LineChart) findViewById(R.id.chart1);
@@ -92,8 +111,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         YAxis leftAxis = mChart.getAxisLeft();
         leftAxis.setTextColor(Color.WHITE);
         leftAxis.setDrawGridLines(false);
-        leftAxis.setAxisMaximum(10f);
-        leftAxis.setAxisMinimum(0f);
+        leftAxis.setAxisMaximum(50f);
+        leftAxis.setAxisMinimum(-50f);
         leftAxis.setDrawGridLines(true);
 
         YAxis rightAxis = mChart.getAxisRight();
@@ -103,28 +122,151 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         mChart.getXAxis().setDrawGridLines(false);
         mChart.setDrawBorders(false);
 
-        feedMultiple();
+        //TimerTask cleartask = new ClearDataTask(mChart);
+        //timer.scheduleAtFixedRate(cleartask, 0, 1000);
 
+        TimerTask sampletask = new TimerTask() {
+            @Override
+            public void run() {
+                sampleTimeSec++;
+                Log.d("SampleRateTask", "every minutes smaples : " + (float)sampleCount/(float)sampleTimeSec);
+            }
+        };
+        timer.scheduleAtFixedRate(sampletask, 0, 1000);
+        feedMultiple();
     }
 
     private void addEntry(SensorEvent event) {
 
         LineData data = mChart.getData();
-
+        int timeCount = 10;
+        sampleCount+=timeCount;
         if (data != null) {
 
-            ILineDataSet set = data.getDataSetByIndex(0);
-            // set.addEntry(...); // can be called as well
-
-            if (set == null) {
-                set = createSet();
-                data.addDataSet(set);
+            {
+                int idx = 0;
+                ILineDataSet set = data.getDataSetByIndex(idx);
+                if (set == null) {
+                    set = createSet(Color.BLACK);
+                    data.addDataSet(set);
+                }
+                for (int i = 0; i < timeCount; ++i) {
+                    data.addEntry(new Entry(set.getEntryCount(), event.values[0] + -5 + idx), idx);
+                }
+            }
+            {
+                int idx = 1;
+                ILineDataSet set = data.getDataSetByIndex(idx);
+                if (set == null) {
+                    set = createSet(Color.DKGRAY);
+                    data.addDataSet(set);
+                }
+                for (int i = 0; i < timeCount; ++i) {
+                    data.addEntry(new Entry(set.getEntryCount(), event.values[0] + -5 + idx), idx);
+                }
+            }
+            {
+                int idx = 2;
+                ILineDataSet set = data.getDataSetByIndex(idx);
+                if (set == null) {
+                    set = createSet(Color.GRAY);
+                    data.addDataSet(set);
+                }
+                for (int i = 0; i < timeCount; ++i) {
+                    data.addEntry(new Entry(set.getEntryCount(), event.values[0] + -5 + idx), idx);
+                }
+            }
+            {
+                int idx = 3;
+                ILineDataSet set = data.getDataSetByIndex(idx);
+                if (set == null) {
+                    set = createSet(Color.LTGRAY);
+                    data.addDataSet(set);
+                }
+                for (int i = 0; i < timeCount; ++i) {
+                    data.addEntry(new Entry(set.getEntryCount(), event.values[0] + -5 + idx), idx);
+                }
+            }
+            {
+                int idx = 4;
+                ILineDataSet set = data.getDataSetByIndex(idx);
+                if (set == null) {
+                    set = createSet(Color.WHITE);
+                    data.addDataSet(set);
+                }
+                for (int i = 0; i < timeCount; ++i) {
+                    data.addEntry(new Entry(set.getEntryCount(), event.values[0] + -5 + idx), idx);
+                }
+            }
+            {
+                int idx = 5;
+                ILineDataSet set = data.getDataSetByIndex(idx);
+                if (set == null) {
+                    set = createSet(Color.RED);
+                    data.addDataSet(set);
+                }
+                for (int i = 0; i < timeCount; ++i) {
+                    data.addEntry(new Entry(set.getEntryCount(), event.values[0] + -5 + idx), idx);
+                }
+            }
+            {
+                int idx = 6;
+                ILineDataSet set = data.getDataSetByIndex(idx);
+                if (set == null) {
+                    set = createSet(Color.GREEN);
+                    data.addDataSet(set);
+                }
+                for (int i = 0; i < timeCount; ++i) {
+                    data.addEntry(new Entry(set.getEntryCount(), event.values[0] + -5 + idx), idx);
+                }
+            }
+            {
+                int idx = 7;
+                ILineDataSet set = data.getDataSetByIndex(idx);
+                if (set == null) {
+                    set = createSet(Color.BLUE);
+                    data.addDataSet(set);
+                }
+                for (int i = 0; i < timeCount; ++i) {
+                    data.addEntry(new Entry(set.getEntryCount(), event.values[0] + -5 + idx), idx);
+                }
+            }
+            {
+                int idx = 8;
+                ILineDataSet set = data.getDataSetByIndex(idx);
+                if (set == null) {
+                    set = createSet(Color.YELLOW);
+                    data.addDataSet(set);
+                }
+                for (int i = 0; i < timeCount; ++i) {
+                    data.addEntry(new Entry(set.getEntryCount(), event.values[0] + -5 + idx), idx);
+                }
+            }
+            {
+                int idx = 9;
+                ILineDataSet set = data.getDataSetByIndex(idx);
+                if (set == null) {
+                    set = createSet(Color.CYAN);
+                    data.addDataSet(set);
+                }
+                for (int i = 0; i < timeCount; ++i) {
+                    data.addEntry(new Entry(set.getEntryCount(), event.values[0] + -5 + idx), idx);
+                }
+            }
+            {
+                int idx = 10;
+                ILineDataSet set = data.getDataSetByIndex(idx);
+                if (set == null) {
+                    set = createSet(Color.MAGENTA);
+                    data.addDataSet(set);
+                }
+                for (int i = 0; i < timeCount; ++i) {
+                    data.addEntry(new Entry(set.getEntryCount(), event.values[0] + -5 + idx), idx);
+                }
             }
 
-//            data.addEntry(new Entry(set.getEntryCount(), (float) (Math.random() * 80) + 10f), 0);
-            data.addEntry(new Entry(set.getEntryCount(), event.values[0] + 5), 0);
             data.notifyDataChanged();
-
+            data.calcMinMaxY(data.getXMin(), data.getXMax());
             // let the chart know it's data has changed
             mChart.notifyDataSetChanged();
 
@@ -134,16 +276,16 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
             // move to the latest entry
             mChart.moveViewToX(data.getEntryCount());
-
+            mChart.setVisibleYRange(-100, 50, YAxis.AxisDependency.LEFT);
         }
     }
 
-    private LineDataSet createSet() {
+    private LineDataSet createSet(int color) {
 
         LineDataSet set = new LineDataSet(null, "Dynamic Data");
         set.setAxisDependency(YAxis.AxisDependency.LEFT);
         set.setLineWidth(3f);
-        set.setColor(Color.MAGENTA);
+        set.setColor(color);
         set.setHighlightEnabled(false);
         set.setDrawValues(false);
         set.setDrawCircles(false);
@@ -165,7 +307,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 while (true){
                     plotData = true;
                     try {
-                        Thread.sleep(10);
+                        Thread.sleep(1);
                     } catch (InterruptedException e) {
                         // TODO Auto-generated catch block
                         e.printStackTrace();
@@ -205,7 +347,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     @Override
     protected void onResume() {
         super.onResume();
-        mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_GAME);
+        boolean breg = mSensorManager.registerListener(this, mAccelerometer, samplePeriodUs);
+        Log.d(TAG, "onCreate: Sensor registered: " + breg);
     }
 
     @Override
